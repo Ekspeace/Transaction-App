@@ -1,0 +1,30 @@
+﻿@model TransactionViewModel
+
+<form method="post" asp-action="Edit">
+    <div class="modal-body">
+        <table width="95%">
+            <tbody style="font-size:14px">
+                <tr>
+                    <td> Client: </td>
+                    <td> @Html.DropDownListFor(t => t.transaction.ClientID, new SelectList(Model.clients,"ClientID", "Name"),"-- Select client --",new { @class = "form-control mb-2", @readonly = true, @disabled =true })</td>
+                </tr>
+                <tr>
+                    <td>Transaction Type:  </td>
+                    <td>@Html.DropDownListFor(t => t.transaction.TransactionTypeID, new SelectList(Model.transactionTypes,"TransactionTypeID", "TransactionTypeName" ),"-- Select Transaction --",new { @class = "form-control mb-2", @readonly = "readonly", @disabled =true }) </td>
+                </tr>
+                <tr>
+                    <td> Amount: </td>
+                    <td> @Html.TextBoxFor(t => t.transaction.Amount, new { @class = "form-control  mb-2", @id = "Amount",  @readonly = "readonly", @disabled =true})</td>
+                </tr>
+                <tr>
+                    <td>Comment: </td>
+                    <td> <textarea class="form-control mb-2" asp-for="@Model.transaction.Comment"></textarea></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="modal-footer">
+        @Html.HiddenFor(t => t.transaction.TransactionID)
+        <button type="submit" class="btn btn-primary"><i class="fas fa-upload me-1"></i>Update</button>
+    </div>
+</form>

@@ -1,0 +1,190 @@
+﻿@model TransactionViewModel
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+@if (ViewBag.ErrorMessage != null)
+{
+    <!-- Alert -->
+    <div class="alert alert-danger modal-body-font" role="alert">
+        <strong>Error!</strong> @ViewBag.ErrorMessage
+        <button type="button" class="close btn btn-sm float-end" data-bs-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true"><i class="fa-sharp fa-solid fa-xmark"></i></span>
+        </button>
+    </div>
+}
+else if (ViewBag.Message != null)
+{
+    <div class="alert alert-success modal-body-font" role="alert">
+        <strong>Success!</strong> @ViewBag.Message
+        <button type="button" class="close btn btn-sm float-end" data-bs-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true"><i class="fa-sharp fa-solid fa-xmark"></i></span>
+        </button>
+    </div>
+}
+
+<div class="container mt-4" style="width:85%">
+    <h3 class="mt-2">Client Transactions</h3>
+
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-baseline">
+            <div><i class="fas fa-search"></i> Search</div>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modelAdd"><i class="fas fa-plus"></i> Add Transaction</button>
+        </div>
+        <div class="card-body" style="width:75%">
+            <form method="get" asp-action="Index">
+                <div class=" d-md-flex col-sm-12">
+                    <div class="form-group mt-2 col-md-4">
+                        <label class="w-auto" for="client">Client</label>
+                        @Html.DropDownListFor(t => t.client, new SelectList(Model.clients,"ClientID", "Name"),"-- All Clients --",new { @class = "form-control" , @id="ddlClient"})
+                    </div>
+                    <div class="form-group mt-2 ms-md-2 col-md-4">
+                        <label class="w-auto" for="transactionType">Transaction type</label>
+                        @Html.DropDownListFor(t => t.transactionType, new SelectList(Model.transactionTypes,"TransactionTypeID", "TransactionTypeName" ),"-- All Types --",new { @class = "form-control" ,@id="ddlTransactionType"})
+                    </div>
+                </div>
+                <div class="mt-2 form-group col-md-8">
+                    <label class="w-auto">Amount</label>
+                    <div class="d-flex">
+                        <input class="form-control" type="number" name="minAmount" id="minAmount" placeholder="Minimum" />
+                        <input class="form-control  ms-2" type="number" name="maxAmount" id="maxAmount" placeholder="Maximum" />
+                    </div>
+                </div>
+                <div class="mt-4 d-flex">
+                    <button class="btn btn-primary me-2" id="btnSearch" type="submit"><i class="fas fa-search me-1"></i>Search</button>
+                    <button class="btn btn-secondary" onclick="ClearFields()"><i class="fas fa-sync me-1"></i>Clear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="table-responsive overflow-auto">
+        <table class="table table-bordered border-radius">
+            <thead class="thead-light">
+                <tr>
+                    <th scope="col">@Html.ActionLink("Client Name", "Index", new { sortOrder = ViewBag.NameSort }) </th>
+                    <th scope="col">Client Surname</th>
+                    <th scope="col">Client Balance</th>
+                    <th scope="col">@Html.ActionLink("Transaction Amount", "Index", new { sortOrder = ViewBag.AmountSort})</th>
+                    <th scope="col">Transaction Type</th>
+                    <th scope="col">Comment</th>
+                    <th scope="col">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.transactions.Count() > 0)
+                {
+                    @foreach (var item in Model.transactions)
+                    {
+                        <tr>
+                            <td>
+                                @Model.clients.Where(c => c.ClientID == item.ClientID).First().Name
+                            </td>
+                            <td>
+                                @Model.clients.Where(c => c.ClientID == item.ClientID).First().Surname
+                            </td>
+                            <td>
+                                @Model.clients.Where(c => c.ClientID == item.ClientID).First().ClientBalance
+                            </td>
+                            <td>
+                                @item.Amount.ToString("F2")
+                            </td>
+                            <td>
+                                @Model.transactionTypes.Where(t => t.TransactionTypeID == item.TransactionTypeID).First().TransactionTypeName
+                            </td>
+                            <td>
+                                @item.Comment
+                            </td>
+                            <td align="center">
+                                <button type="button" class="btn btn-info me-md-3 edit modal-body-font " asp-action="Edit" data-bs-id="@item.TransactionID" data-bs-toggle="modal" data-bs-target="#modelEdit" title="Edit">
+                                    <i class="fa fa-edit"></i> </button>
+
+                                <button type="button" class="btn btn-danger delete modal-body-font" asp-action="Delete" data-bs-id="@item.TransactionID" data-bs-toggle="modal" data-bs-target="#modelDelete" title="Delete">
+                                    <i class="fa fa-trash-can"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="7" align="center">No Record Found</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal Add -->
+    <div class="modal fade" id="modelAdd"  tabindex="-1" role="dialog" aria-labelledby="modelAddTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modelAddTitle">Add Transaction</h5>
+                    <button type="button" class="close btn btn-light" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true"><i class="fa-sharp fa-solid fa-xmark"></i></span>
+                    </button>
+                </div>
+                <form method="post" asp-action="Index">
+                    <div class="modal-body">
+                        <table width="95%">
+                            <tbody style="font-size:14px">
+                                <tr>
+                                    <td> Client: <span class="text-danger">*</span></td>
+                                    <td> @Html.DropDownListFor(t => t.transaction.ClientID, new SelectList(Model.clients,"ClientID", "Name"),"-- Select client --",new { @class = "form-control mb-2" })</td>
+                                </tr>
+                              @*  <tr> <span asp-validation-for="transaction.ClientID" class="text-danger text-sm-start"></span></tr>*@
+                                <tr>
+                                    <td>Transaction Type: <span class="text-danger">*</span> </td>
+                                    <td>@Html.DropDownListFor(t => t.transaction.TransactionTypeID, new SelectList(Model.transactionTypes,"TransactionTypeID", "TransactionTypeName" ),"-- Select Transaction --",new { @class = "form-control mb-2" }) </td>
+                                </tr>
+                               @* <tr> <span asp-validation-for="transaction.TransactionTypeID" class="text-danger text-sm-start"></span></tr>*@
+                                <tr>
+                                    <td> Amount: <span class="text-danger">*</span></td>
+                                    <td> @Html.TextBoxFor(t => t.transaction.Amount, new { @class = "form-control  mb-2", @id = "Amount", @type="number"})</td>
+                                </tr>
+                               @* <tr> <span asp-validation-for="transaction.Amount" class="text-danger text-sm-start"></span></tr>*@
+                                <tr>
+                                    <td>Comment: </td>
+                                    <td> <textarea class="form-control mb-2" asp-for="transaction.Comment"></textarea></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" a class="btn btn-primary"><i class="fas fa-save me-1"></i>Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit -->
+    <div class="modal fade" id="modelEdit" tabindex="-1" role="dialog" aria-labelledby="modelEditTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modelEditTitle">Edit Transaction</h5>
+                    <button type="button" class="close btn btn-light" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true"><i class="fa-sharp fa-solid fa-xmark"></i></span>
+                    </button>
+                </div>
+                <div class="modal_body_edit"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Delete -->
+    <div class="modal fade" id="modelDelete" tabindex="-1" role="dialog" aria-labelledby="modelDeleteTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title" id="modelDeleteTitle">Delete Transaction</h6>
+                    <button type="button" class="close btn btn-light" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true"><i class="fa-sharp fa-solid fa-xmark"></i></span>
+                    </button>
+                </div>
+                <div class="modal_body_delete"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
